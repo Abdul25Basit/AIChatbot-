@@ -13,7 +13,7 @@ import textwrap
 import google.generativeai as genai
 
 
-from IPython.display import Markdown
+
 
 
 def to_markdown(text):

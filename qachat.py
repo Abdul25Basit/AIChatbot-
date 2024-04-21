@@ -38,6 +38,12 @@ if submit and input:
     st.write(chunk.text)
     st.session_state['chat_history'].append(("Bot", chunk.text))
 
+  # Print chat history length for debugging
+  print(f"Chat history length: {len(st.session_state['chat_history'])}")
+
+  # **Debugging Print Statement**
+  print("Before Download Button Check")
+
   # Add button for PDF download
   if st.button("Download PDF"):
     # Generate PDF content

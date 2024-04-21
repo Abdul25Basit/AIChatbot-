@@ -6,6 +6,7 @@ load_dotenv() ## loading all the environment variables
 import streamlit as st
 import os
 import google.generativeai as genai
+from googleapiclient.discovery import build  # For Google CSE API
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
@@ -15,6 +16,18 @@ chat = model.start_chat(history=[])
 def get_gemini_response(question):
   response=chat.send_message(question,stream=True)
   return response
+
+## Google Custom Search Engine API (replace with your details)
+YOUR_CSE_ID = "YOUR_CSE_ID"
+YOUR_API_KEY = "YOUR_API_KEY"
+def google_search(query):
+  service = build("customsearch", "v1", developerKey=YOUR_API_KEY)
+  res = service.cse().list(
+      q=query, cx=YOUR_CSE_ID
+  ).execute()
+  if not 'items' in res:
+    return []
+  return [item['snippet'] for item in res['items']]
 
 ##initialize our streamlit app
 
@@ -38,11 +51,20 @@ if submit and input:
     st.write(chunk.text)
     st.session_state['chat_history'].append(("Bot", chunk.text))
 
+  # Sentiment analysis using TextBlob
+  from textblob import TextBlob
+  sentiment = TextBlob(input).sentiment.polarity
+
+  # Perform web search based on query (if sentiment is neutral)
+  if -0.1 < sentiment < 0.1:
+    search_results = google_search(input)
+    if search_results:
+      st.write("Here are some additional resources from the web:")
+      for result in search_results:
+        st.write(f"- {result}")
+
   # Print chat history length for debugging
   print(f"Chat history length: {len(st.session_state['chat_history'])}")
-
-  # **Debugging Print Statement**
-  print("Before Download Button Check")
 
   # Add button for PDF download
   if st.button("Download PDF"):
@@ -62,12 +84,3 @@ if submit and input:
     for text in pdf_text.splitlines():
       pdf.drawString(50, y_pos, text)
       y_pos -= line_height
-
-    # Save the PDF document
-    pdf.save()
-
-    st.success("Chat history downloaded as chat_history.pdf")
-
-st.subheader("The Chat History is")
-for role, text in st.session_state['chat_history']:
-  st.write(f"{role}: {text}")
